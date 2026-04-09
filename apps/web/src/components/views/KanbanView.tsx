@@ -53,11 +53,11 @@ function TaskCard({ task, onClick }: TaskCardProps) {
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-white rounded-md border border-gray-100 mb-2 select-none group ${
-        isDragging ? 'opacity-50 ring-2 ring-blue-400 shadow-md' : 'hover:shadow-sm'
+      className={`bg-white rounded-xl border border-gray-100/80 mb-2 select-none group shadow-sm hover:shadow-md transition-all duration-200 ${
+        isDragging ? 'opacity-50 ring-2 ring-gray-900/20 shadow-lg' : 'hover:border-gray-200'
       }`}
     >
-      <div className="flex items-start gap-2 p-3">
+      <div className="flex items-start gap-2.5 p-4">
         {/* Drag handle */}
         <div
           {...attributes}
@@ -75,14 +75,14 @@ function TaskCard({ task, onClick }: TaskCardProps) {
         </div>
 
         {/* Task content - clickable */}
-        <button onClick={onClick} className="flex-1 text-left">
-          <p className="text-sm text-gray-800 leading-snug">
+        <button type="button" onClick={onClick} className="flex-1 text-left">
+          <p className="text-sm text-gray-800 leading-snug font-medium">
             {task.title}
           </p>
-          <div className="mt-2 flex items-center gap-2 flex-wrap">
+          <div className="mt-2.5 flex items-center gap-2 flex-wrap">
             {task.priority && (
               <span
-                className={`text-[11px] px-1.5 py-0.5 rounded ${
+                className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
                   task.priority === 'urgent'
                     ? 'bg-red-50 text-red-600'
                     : task.priority === 'high'
@@ -102,7 +102,7 @@ function TaskCard({ task, onClick }: TaskCardProps) {
               </span>
             )}
             {task.needsApproval && (
-              <span className="text-[11px] px-1.5 py-0.5 rounded bg-yellow-50 text-yellow-600">
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-600 font-medium">
                 {task.approvedBy ? '✓' : '⏳'}
               </span>
             )}
@@ -123,24 +123,24 @@ function Column({
   onTaskClick: (task: Task) => void;
 }) {
   return (
-    <div className="flex flex-col w-64 flex-shrink-0 bg-gray-50/50 rounded-lg">
+    <div className="flex flex-col w-72 flex-shrink-0 bg-gray-50/50 rounded-2xl">
       {/* Column header */}
-      <div className="px-3 py-2.5 flex items-center justify-between">
-        <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">{column.label}</span>
-        <span className="text-xs text-gray-400 bg-white px-1.5 py-0.5 rounded-full border border-gray-200">
+      <div className="px-4 py-3.5 flex items-center justify-between">
+        <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{column.label}</span>
+        <span className="text-xs text-gray-400 bg-white px-2 py-0.5 rounded-full border border-gray-200/60 font-medium shadow-sm">
           {tasks.length}
         </span>
       </div>
 
       {/* Droppable area */}
-      <div className="flex-1 overflow-y-auto px-2 pb-2">
+      <div className="flex-1 overflow-y-auto px-3 pb-3">
         <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
           {tasks.map((task) => (
             <TaskCard key={task.id} task={task} onClick={() => onTaskClick(task)} />
           ))}
         </SortableContext>
         {tasks.length === 0 && (
-          <div className="border-2 border-dashed border-gray-200 rounded-md p-4 text-center">
+          <div className="border-2 border-dashed border-gray-200/80 rounded-xl p-6 text-center">
             <p className="text-xs text-gray-400">Drop tasks here</p>
           </div>
         )}
@@ -211,8 +211,8 @@ export function KanbanView({ listId, onSelectTask }: KanbanViewProps) {
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-white">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-100">
-        <h2 className="text-base font-semibold text-gray-900">Board</h2>
+      <div className="px-8 py-5 border-b border-gray-100/80">
+        <h2 className="text-lg font-semibold text-gray-900 tracking-tight">Board</h2>
       </div>
 
       {/* Kanban board */}
@@ -223,7 +223,7 @@ export function KanbanView({ listId, onSelectTask }: KanbanViewProps) {
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <div className="flex gap-3 p-6 h-full">
+          <div className="flex gap-4 p-6 h-full">
             {COLUMNS.map((column) => (
               <Column
                 key={column.id}
@@ -235,7 +235,7 @@ export function KanbanView({ listId, onSelectTask }: KanbanViewProps) {
           </div>
           <DragOverlay>
             {activeTask && (
-              <div className="bg-white rounded-md border border-gray-200 p-3 shadow-lg opacity-95">
+              <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-xl opacity-95">
                 <p className="text-sm font-medium text-gray-900">{activeTask.title}</p>
               </div>
             )}
