@@ -4,6 +4,7 @@ import { Resend } from 'resend';
 import type { Env } from '../index';
 import { magicTokens, users } from '../db/schema';
 import { eq, and } from 'drizzle-orm';
+import { signJwt } from '../utils/jwt';
 
 export const auth = new Hono<{ Bindings: Env }>();
 
@@ -161,14 +162,14 @@ auth.get('/verify', async (c) => {
     user = { id: userId, email: userEmail, name: userName, createdAt: now };
   }
 
-  // Generate a simple JWT-like token (in production, use a proper JWT library)
+  // Sign a proper JWT with cryptographic verification
   const currentUser = user!;
   const jwtPayload = {
     sub: currentUser.id,
     email: currentUser.email,
     exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60, // 7 days
   };
-  const encodedToken = btoa(JSON.stringify(jwtPayload));
+  const signedToken = await signJwt(jwtPayload, c.env);
 
-  return c.json({ token: encodedToken, user: { id: currentUser.id, email: currentUser.email } });
+  return c.json({ token: signedToken, user: { id: currentUser.id, email: currentUser.email } });
 });
