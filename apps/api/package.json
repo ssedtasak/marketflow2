@@ -13,12 +13,13 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "hono": "^4.6.0",
+    "@marketflow/shared": "workspace:*",
     "drizzle-orm": "^0.33.0",
-    "zod": "^3.23.0",
-    "yjs": "^13.6.0",
+    "hono": "^4.6.0",
+    "resend": "^6.10.0",
     "y-protocols": "^1.0.6",
-    "@marketflow/shared": "workspace:*"
+    "yjs": "^13.6.0",
+    "zod": "^3.23.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240800.0",

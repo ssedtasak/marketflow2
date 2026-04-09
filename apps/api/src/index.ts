@@ -15,6 +15,7 @@ export type Env = {
   SYNC_DOC: DurableObjectNamespace;
   JWT_SECRET: string;
   ENVIRONMENT: string;
+  RESEND_API_KEY: string;
 };
 
 const app = new Hono<{ Bindings: Env }>();
