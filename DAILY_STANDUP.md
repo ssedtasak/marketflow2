@@ -1,5 +1,68 @@
 # Daily Standup & Learning Log
 
+## 2026-04-10
+
+### What We Did
+
+**P1 Security Implementation:**
+- Replaced homemade JWT (btoa) with proper `hono/jwt` cryptographic signing
+- Implemented real RBAC middleware checking workspace_members table
+- Added workspace member authorization on lists/tasks routes
+- Fixed frontend auth bypass (now checks VITE_ENVIRONMENT)
+- Removed stub routes (folders, comments, uploads)
+
+**Quality Gate System:**
+- Added 4 new agents: surveyor, analyzer, risk-evaluator, critic
+- CTO workflow updated with pre-flight quality gate
+- All agents given memory tools for self-learning
+
+**Testing & Deployment:**
+- Local testing with dev mode bypass
+- Deployed to Cloudflare Workers
+- Created PR and merged to main
+
+### Key Fixes Applied
+
+1. **Homemade JWT vulnerability** - Replaced btoa() with hono/jwt for HS256 signing
+2. **RBAC stub** - Implemented real role checking (admin/member/viewer)
+3. **Auth bypass in production** - auth-context.tsx now checks VITE_ENVIRONMENT
+4. **Stub routes security** - Removed folders/comments/uploads endpoints
+
+### Self-Learning System
+
+**Memory entities added:**
+- `MarketFlow` - Project overview
+- `TechDecisions` - Key architectural choices
+- `Phase2Lessons` - Past bugs and fixes
+- `SecurityFixes` - Security lessons
+- `P1SecurityImplementation` - JWT/RBAC details
+- `CommonBugs` - Recurring issues
+
+**Pre-flight checklist (QA & DevOps agents):**
+1. Run `pnpm typecheck`
+2. Check local DB tables exist
+3. Run migrations if needed
+4. Verify ENVIRONMENT setting
+5. Build before deploy
+
+### Common Bugs (Auto-Learned)
+
+| Issue | Solution |
+|-------|----------|
+| Local DB tables missing | `wrangler d1 execute --local --file=migrations/*.sql` |
+| ENVIRONMENT blocks dev bypass | Set to 'development' for local, 'production' for deploy |
+| Remote DB not updated | Apply migrations with `--remote` flag |
+| Dev token doesn't work | Production mode requires real magic link auth |
+
+### Before Starting Next Day
+
+1. Run `pnpm typecheck` to verify no errors
+2. Check memory: `memory___search_nodes({ query: "CommonBugs" })`
+3. Run pre-flight checklist if deploying
+4. Test locally before testing on production
+
+---
+
 ## 2026-04-09
 
 ### What We Did
