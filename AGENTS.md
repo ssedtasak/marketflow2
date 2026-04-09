@@ -2,6 +2,14 @@
 
 MarketFlow is a Cloudflare-native project management tool for marketing teams, built with React + Vite + Hono + D1 + Durable Objects.
 
+## Before Starting - Read This First
+
+**IMPORTANT:** Before starting any work, read `DAILY_STANDUP.md` for:
+- Current project status and deployment URLs
+- Known issues and fixes already applied
+- Lessons learned from previous sessions
+- Pre-flight checks before deploying
+
 ## Project Structure
 
 ```
