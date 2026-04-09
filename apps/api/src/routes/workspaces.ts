@@ -98,3 +98,32 @@ workspaces.get('/:id/members', async (c) => {
   
   return c.json({ members: results });
 });
+
+workspaces.delete('/:id', requireRole('admin')(), async (c) => {
+  const db = drizzle(c.env.DB);
+  const user = c.get('user');
+  const id = c.req.param('id');
+
+  // Verify workspace exists and user is owner
+  const ws = await db
+    .select()
+    .from(workspacesTable)
+    .where(eq(workspacesTable.id, id))
+    .get();
+
+  if (!ws) {
+    return c.json({ error: 'Workspace not found' }, 404);
+  }
+
+  if (ws.ownerId !== user.id) {
+    return c.json({ error: 'Only the workspace owner can delete it' }, 403);
+  }
+
+  // Delete workspace members first
+  await db.delete(workspaceMembers).where(eq(workspaceMembers.workspaceId, id)).execute();
+
+  // Delete the workspace
+  await db.delete(workspacesTable).where(eq(workspacesTable.id, id)).execute();
+
+  return c.json({ ok: true });
+});

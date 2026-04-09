@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useWorkspaces, useLists, useCreateWorkspace, useCreateList, useDeleteList } from '@/hooks/useQueries';
+import { useWorkspaces, useLists, useCreateWorkspace, useDeleteWorkspace, useCreateList, useDeleteList } from '@/hooks/useQueries';
 import { useAuth } from '@/lib/auth-context';
-import { getAllStatuses, addCustomStatus, removeCustomStatus, type StatusConfig } from '@/lib/statuses';
+import { useAllStatuses, addCustomStatus, removeCustomStatus, type StatusConfig } from '@/lib/statuses';
 
 interface SidebarProps {
   selectedListId: string | null;
@@ -11,12 +11,10 @@ interface SidebarProps {
 }
 
 function StatusManager({ onClose }: { onClose: () => void }) {
-  const [statuses, setStatuses] = useState<StatusConfig[]>(getAllStatuses());
+  const statuses = useAllStatuses();
   const [newId, setNewId] = useState('');
   const [newLabel, setNewLabel] = useState('');
   const [error, setError] = useState('');
-
-  const refresh = () => setStatuses(getAllStatuses());
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +24,6 @@ function StatusManager({ onClose }: { onClose: () => void }) {
       addCustomStatus(newId.trim().replace(/\s+/g, '_').toLowerCase(), newLabel.trim());
       setNewId('');
       setNewLabel('');
-      refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add status');
     }
@@ -35,7 +32,6 @@ function StatusManager({ onClose }: { onClose: () => void }) {
   const handleRemove = (id: string) => {
     try {
       removeCustomStatus(id);
-      refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to remove status');
     }
@@ -124,6 +120,7 @@ export function Sidebar({
   );
   const { data: lists = [], isLoading: listsLoading } = useLists(selectedWsId ?? '');
   const deleteList = useDeleteList();
+  const deleteWs = useDeleteWorkspace();
 
   // Update selectedWsId when workspaces load
   useEffect(() => {
@@ -179,6 +176,21 @@ export function Sidebar({
     }
   };
 
+  const handleDeleteWorkspace = async () => {
+    if (!selectedWsId) return;
+    const ws = workspaces.find((w) => w.id === selectedWsId);
+    if (!ws) return;
+    if (!confirm(`Delete workspace "${ws.name}"? All lists and tasks in this workspace will be permanently deleted.`)) return;
+    try {
+      await deleteWs.mutateAsync(selectedWsId);
+      // Switch to another workspace or clear selection
+      const remaining = workspaces.filter((w) => w.id !== selectedWsId);
+      setSelectedWsId(remaining.length > 0 ? remaining[0].id : null);
+    } catch {
+      // error handled by mutation
+    }
+  };
+
   return (
     <>
       {showStatusManager && <StatusManager onClose={() => setShowStatusManager(false)} />}
@@ -214,18 +226,32 @@ export function Sidebar({
 
         {/* Workspace selector */}
         <div className="px-3 py-3 border-b border-gray-100/60">
-          <select
-            value={selectedWsId ?? ''}
-            onChange={(e) => setSelectedWsId(e.target.value || null)}
-            className="w-full text-sm bg-white border border-gray-200/60 rounded-lg px-3 py-2 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 transition-all duration-200 cursor-pointer"
-          >
-            {wsLoading && <option className="bg-white">Loading...</option>}
-            {workspaces.map((ws) => (
-              <option key={ws.id} value={ws.id} className="bg-white">
-                {ws.name}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center gap-1.5">
+            <select
+              value={selectedWsId ?? ''}
+              onChange={(e) => setSelectedWsId(e.target.value || null)}
+              className="flex-1 text-sm bg-white border border-gray-200/60 rounded-lg px-3 py-2 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 transition-all duration-200 cursor-pointer"
+            >
+              {wsLoading && <option className="bg-white">Loading...</option>}
+              {workspaces.map((ws) => (
+                <option key={ws.id} value={ws.id} className="bg-white">
+                  {ws.name}
+                </option>
+              ))}
+            </select>
+            {selectedWsId && (
+              <button
+                type="button"
+                onClick={handleDeleteWorkspace}
+                className="text-gray-300 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-all duration-200 flex-shrink-0"
+                title="Delete workspace"
+              >
+                <svg className="h-3.5 w-3.5" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
           {showNewWs && (
             <form onSubmit={handleCreateWs} className="mt-2.5 flex gap-1.5">
               <input

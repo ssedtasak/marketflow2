@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useTasks, useUpdateTask, useDeleteTask, useCreateTask, type Task } from '@/hooks/useQueries';
-import { getAllStatuses } from '@/lib/statuses';
+import { useTasks, useUpdateTask, useDeleteTask, useCreateTask, useList, useWorkspaceMembers, type Task } from '@/hooks/useQueries';
+import { useAllStatuses } from '@/lib/statuses';
 
 const PRIORITY_OPTIONS = ['low', 'normal', 'high', 'urgent'] as const;
 
@@ -17,7 +17,17 @@ export function ListView({ listId, onSelectTask }: ListViewProps) {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [showNewTask, setShowNewTask] = useState(false);
 
-  const statuses = getAllStatuses();
+  const statuses = useAllStatuses();
+
+  // Get workspace members for assignee resolution
+  const { data: list } = useList(listId);
+  const workspaceId = list?.workspaceId;
+  const { data: membersData } = useWorkspaceMembers(workspaceId ?? '');
+  const members = membersData?.members ?? [];
+  const assigneeMap: Record<string, string> = {};
+  for (const m of members) {
+    assigneeMap[m.userId] = m.name || m.email;
+  }
 
   const handleStatusChange = async (task: Task, newStatus: string) => {
     try {
@@ -150,6 +160,9 @@ export function ListView({ listId, onSelectTask }: ListViewProps) {
               <th className="text-left text-[11px] font-medium text-gray-400 uppercase tracking-wide px-4 py-3 w-28">
                 Due Date
               </th>
+              <th className="text-left text-[11px] font-medium text-gray-400 uppercase tracking-wide px-4 py-3 w-32">
+                Assignee
+              </th>
               <th className="text-left text-[11px] font-medium text-gray-400 uppercase tracking-wide px-4 py-3 w-16">
                 Approval
               </th>
@@ -214,6 +227,15 @@ export function ListView({ listId, onSelectTask }: ListViewProps) {
                   />
                 </td>
                 <td className="px-4 py-3.5">
+                  {task.assigneeId && assigneeMap[task.assigneeId] ? (
+                    <span className="text-xs text-gray-600 font-medium">
+                      {assigneeMap[task.assigneeId]}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-gray-300">—</span>
+                  )}
+                </td>
+                <td className="px-4 py-3.5">
                   {task.needsApproval ? (
                     <span
                       className={`text-[11px] px-2.5 py-1 rounded-full font-medium ${
@@ -244,7 +266,7 @@ export function ListView({ listId, onSelectTask }: ListViewProps) {
             ))}
             {tasks.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-8 py-16 text-center text-sm text-gray-400">
+                <td colSpan={7} className="px-8 py-16 text-center text-sm text-gray-400">
                   No tasks yet. Create your first task above.
                 </td>
               </tr>

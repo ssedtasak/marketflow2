@@ -99,6 +99,9 @@ export const workspacesApi = {
       `/workspaces/${workspaceId}/members`,
       { token }
     ).then((res) => (Array.isArray(res) ? res : res)),
+
+  delete: (token: string, id: string) =>
+    apiRequest<{ ok: boolean }>(`/workspaces/${id}`, { method: 'DELETE', token }),
 };
 
 // ─── Lists ────────────────────────────────────────────────────────────────────

@@ -41,6 +41,20 @@ export function useCreateWorkspace() {
   });
 }
 
+export function useDeleteWorkspace() {
+  const { token } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => {
+      if (!token) throw new Error('Not authenticated');
+      return workspacesApi.delete(token, id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.workspaces });
+    },
+  });
+}
+
 export function useWorkspaceMembers(workspaceId: string) {
   const { token } = useAuth();
   return useQuery({

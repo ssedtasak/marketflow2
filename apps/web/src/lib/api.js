@@ -51,6 +51,7 @@ export const workspacesApi = {
     create: (token, name) => apiRequest('/workspaces', { method: 'POST', body: { name }, token }),
     get: (token, id) => apiRequest(`/workspaces/${id}`, { token }),
     getMembers: (token, workspaceId) => apiRequest(`/workspaces/${workspaceId}/members`, { token }).then((res) => (Array.isArray(res) ? res : res)),
+    delete: (token, id) => apiRequest(`/workspaces/${id}`, { method: 'DELETE', token }),
 };
 // ─── Lists ────────────────────────────────────────────────────────────────────
 export const listsApi = {

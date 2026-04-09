@@ -1,14 +1,13 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { useState, useEffect } from 'react';
-import { useWorkspaces, useLists, useCreateWorkspace, useCreateList, useDeleteList } from '@/hooks/useQueries';
+import { useWorkspaces, useLists, useCreateWorkspace, useDeleteWorkspace, useCreateList, useDeleteList } from '@/hooks/useQueries';
 import { useAuth } from '@/lib/auth-context';
-import { getAllStatuses, addCustomStatus, removeCustomStatus } from '@/lib/statuses';
+import { useAllStatuses, addCustomStatus, removeCustomStatus } from '@/lib/statuses';
 function StatusManager({ onClose }) {
-    const [statuses, setStatuses] = useState(getAllStatuses());
+    const statuses = useAllStatuses();
     const [newId, setNewId] = useState('');
     const [newLabel, setNewLabel] = useState('');
     const [error, setError] = useState('');
-    const refresh = () => setStatuses(getAllStatuses());
     const handleAdd = (e) => {
         e.preventDefault();
         setError('');
@@ -18,7 +17,6 @@ function StatusManager({ onClose }) {
             addCustomStatus(newId.trim().replace(/\s+/g, '_').toLowerCase(), newLabel.trim());
             setNewId('');
             setNewLabel('');
-            refresh();
         }
         catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to add status');
@@ -27,7 +25,6 @@ function StatusManager({ onClose }) {
     const handleRemove = (id) => {
         try {
             removeCustomStatus(id);
-            refresh();
         }
         catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to remove status');
@@ -41,6 +38,7 @@ export function Sidebar({ selectedListId, onSelectList, onSelectView, currentVie
     const [selectedWsId, setSelectedWsId] = useState(workspaces[0]?.id ?? null);
     const { data: lists = [], isLoading: listsLoading } = useLists(selectedWsId ?? '');
     const deleteList = useDeleteList();
+    const deleteWs = useDeleteWorkspace();
     // Update selectedWsId when workspaces load
     useEffect(() => {
         if (!selectedWsId && workspaces.length > 0) {
@@ -96,7 +94,25 @@ export function Sidebar({ selectedListId, onSelectList, onSelectView, currentVie
             // error handled by mutation
         }
     };
-    return (_jsxs(_Fragment, { children: [showStatusManager && _jsx(StatusManager, { onClose: () => setShowStatusManager(false) }), _jsxs("aside", { className: "w-56 min-h-screen bg-gray-50/80 border-r border-gray-100/80 flex flex-col", children: [_jsx("div", { className: "px-4 py-4 border-b border-gray-100/60", children: _jsxs("div", { className: "flex items-center justify-between", children: [_jsxs("div", { className: "flex items-center gap-2.5", children: [_jsx("div", { className: "w-8 h-8 rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center shadow-sm", children: _jsxs("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", xmlns: "http://www.w3.org/2000/svg", children: [_jsx("path", { d: "M2 12L8 4L14 12", stroke: "white", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), _jsx("path", { d: "M5 12L8 7L11 12", stroke: "white", strokeWidth: "1", strokeLinecap: "round", strokeLinejoin: "round", opacity: "0.6" })] }) }), _jsxs("div", { children: [_jsx("h1", { className: "text-sm font-semibold text-gray-900 tracking-tight", children: "MarketFlow" }), user && (_jsx("p", { className: "text-[10px] text-gray-400 truncate max-w-28", children: user.email }))] })] }), _jsx("button", { onClick: logout, className: "text-gray-300 hover:text-gray-500 p-1.5 rounded-lg hover:bg-gray-100/80 transition-all duration-200", title: "Sign out", children: _jsx("svg", { className: "h-4 w-4", width: "16", height: "16", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", children: _jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 1.5, d: "M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" }) }) })] }) }), _jsxs("div", { className: "px-3 py-3 border-b border-gray-100/60", children: [_jsxs("select", { value: selectedWsId ?? '', onChange: (e) => setSelectedWsId(e.target.value || null), className: "w-full text-sm bg-white border border-gray-200/60 rounded-lg px-3 py-2 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 transition-all duration-200 cursor-pointer", children: [wsLoading && _jsx("option", { className: "bg-white", children: "Loading..." }), workspaces.map((ws) => (_jsx("option", { value: ws.id, className: "bg-white", children: ws.name }, ws.id)))] }), showNewWs && (_jsxs("form", { onSubmit: handleCreateWs, className: "mt-2.5 flex gap-1.5", children: [_jsx("input", { autoFocus: true, value: newWsName, onChange: (e) => setNewWsName(e.target.value), placeholder: "Workspace name", className: "flex-1 text-xs bg-white border border-gray-200 rounded-lg px-3 py-2 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 transition-all duration-200" }), _jsx("button", { type: "submit", className: "px-3 py-2 text-xs text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-all duration-200 active:scale-[0.98]", children: "Add" }), _jsx("button", { type: "button", onClick: () => setShowNewWs(false), className: "px-2 py-2 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200", children: "\u2715" })] })), !showNewWs && (_jsxs("button", { type: "button", onClick: () => setShowNewWs(true), className: "mt-2.5 w-full text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100/80 flex items-center gap-1.5 px-2 py-1.5 rounded-lg transition-all duration-200", children: [_jsx("svg", { className: "h-3.5 w-3.5", width: "12", height: "12", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", children: _jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M12 4v16m8-8H4" }) }), "New workspace"] }))] }), _jsxs("div", { className: "px-3 py-3 border-b border-gray-100/60", children: [_jsx("p", { className: "text-[10px] font-medium text-gray-300 uppercase tracking-wider mb-2 px-2", children: "View" }), _jsxs("div", { className: "flex gap-1 bg-gray-100/60 rounded-xl p-1", children: [_jsxs("button", { type: "button", onClick: () => onSelectView('calendar'), title: "Calendar", className: `flex-1 flex flex-col items-center gap-0.5 py-2 rounded-lg transition-all duration-200 ${currentView === 'calendar'
+    const handleDeleteWorkspace = async () => {
+        if (!selectedWsId)
+            return;
+        const ws = workspaces.find((w) => w.id === selectedWsId);
+        if (!ws)
+            return;
+        if (!confirm(`Delete workspace "${ws.name}"? All lists and tasks in this workspace will be permanently deleted.`))
+            return;
+        try {
+            await deleteWs.mutateAsync(selectedWsId);
+            // Switch to another workspace or clear selection
+            const remaining = workspaces.filter((w) => w.id !== selectedWsId);
+            setSelectedWsId(remaining.length > 0 ? remaining[0].id : null);
+        }
+        catch {
+            // error handled by mutation
+        }
+    };
+    return (_jsxs(_Fragment, { children: [showStatusManager && _jsx(StatusManager, { onClose: () => setShowStatusManager(false) }), _jsxs("aside", { className: "w-56 min-h-screen bg-gray-50/80 border-r border-gray-100/80 flex flex-col", children: [_jsx("div", { className: "px-4 py-4 border-b border-gray-100/60", children: _jsxs("div", { className: "flex items-center justify-between", children: [_jsxs("div", { className: "flex items-center gap-2.5", children: [_jsx("div", { className: "w-8 h-8 rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center shadow-sm", children: _jsxs("svg", { width: "16", height: "16", viewBox: "0 0 16 16", fill: "none", xmlns: "http://www.w3.org/2000/svg", children: [_jsx("path", { d: "M2 12L8 4L14 12", stroke: "white", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), _jsx("path", { d: "M5 12L8 7L11 12", stroke: "white", strokeWidth: "1", strokeLinecap: "round", strokeLinejoin: "round", opacity: "0.6" })] }) }), _jsxs("div", { children: [_jsx("h1", { className: "text-sm font-semibold text-gray-900 tracking-tight", children: "MarketFlow" }), user && (_jsx("p", { className: "text-[10px] text-gray-400 truncate max-w-28", children: user.email }))] })] }), _jsx("button", { onClick: logout, className: "text-gray-300 hover:text-gray-500 p-1.5 rounded-lg hover:bg-gray-100/80 transition-all duration-200", title: "Sign out", children: _jsx("svg", { className: "h-4 w-4", width: "16", height: "16", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", children: _jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 1.5, d: "M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" }) }) })] }) }), _jsxs("div", { className: "px-3 py-3 border-b border-gray-100/60", children: [_jsxs("div", { className: "flex items-center gap-1.5", children: [_jsxs("select", { value: selectedWsId ?? '', onChange: (e) => setSelectedWsId(e.target.value || null), className: "flex-1 text-sm bg-white border border-gray-200/60 rounded-lg px-3 py-2 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 transition-all duration-200 cursor-pointer", children: [wsLoading && _jsx("option", { className: "bg-white", children: "Loading..." }), workspaces.map((ws) => (_jsx("option", { value: ws.id, className: "bg-white", children: ws.name }, ws.id)))] }), selectedWsId && (_jsx("button", { type: "button", onClick: handleDeleteWorkspace, className: "text-gray-300 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-all duration-200 flex-shrink-0", title: "Delete workspace", children: _jsx("svg", { className: "h-3.5 w-3.5", width: "14", height: "14", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", children: _jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M6 18L18 6M6 6l12 12" }) }) }))] }), showNewWs && (_jsxs("form", { onSubmit: handleCreateWs, className: "mt-2.5 flex gap-1.5", children: [_jsx("input", { autoFocus: true, value: newWsName, onChange: (e) => setNewWsName(e.target.value), placeholder: "Workspace name", className: "flex-1 text-xs bg-white border border-gray-200 rounded-lg px-3 py-2 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 transition-all duration-200" }), _jsx("button", { type: "submit", className: "px-3 py-2 text-xs text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-all duration-200 active:scale-[0.98]", children: "Add" }), _jsx("button", { type: "button", onClick: () => setShowNewWs(false), className: "px-2 py-2 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200", children: "\u2715" })] })), !showNewWs && (_jsxs("button", { type: "button", onClick: () => setShowNewWs(true), className: "mt-2.5 w-full text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100/80 flex items-center gap-1.5 px-2 py-1.5 rounded-lg transition-all duration-200", children: [_jsx("svg", { className: "h-3.5 w-3.5", width: "12", height: "12", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", children: _jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M12 4v16m8-8H4" }) }), "New workspace"] }))] }), _jsxs("div", { className: "px-3 py-3 border-b border-gray-100/60", children: [_jsx("p", { className: "text-[10px] font-medium text-gray-300 uppercase tracking-wider mb-2 px-2", children: "View" }), _jsxs("div", { className: "flex gap-1 bg-gray-100/60 rounded-xl p-1", children: [_jsxs("button", { type: "button", onClick: () => onSelectView('calendar'), title: "Calendar", className: `flex-1 flex flex-col items-center gap-0.5 py-2 rounded-lg transition-all duration-200 ${currentView === 'calendar'
                                             ? 'bg-white text-gray-900 shadow-sm'
                                             : 'text-gray-400 hover:text-gray-600 hover:bg-white/50'}`, children: [_jsx("svg", { className: "h-4 w-4", width: "16", height: "16", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", children: _jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 1.5, d: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" }) }), _jsx("span", { className: "text-[10px] font-medium", children: "Calendar" })] }, "calendar"), _jsxs("button", { type: "button", onClick: () => onSelectView('list'), title: "List", className: `flex-1 flex flex-col items-center gap-0.5 py-2 rounded-lg transition-all duration-200 ${currentView === 'list'
                                             ? 'bg-white text-gray-900 shadow-sm'
