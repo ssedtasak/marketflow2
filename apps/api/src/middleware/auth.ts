@@ -3,6 +3,7 @@ import type { AppType } from '../types';
 import { drizzle } from 'drizzle-orm/d1';
 import { users } from '../db/schema';
 import { eq } from 'drizzle-orm';
+import { verifyJwt } from '../utils/jwt';
 
 // Dev mode: skip auth verification
 // In production, verify JWT from Authorization header
@@ -36,27 +37,23 @@ export const requireAuth: MiddlewareHandler<AppType> = async (c, next) => {
   const token = authHeader.slice(7);
 
   try {
-    // Decode the JWT (base64 encoded JSON payload)
-    const payload = JSON.parse(atob(token));
-    
-    // Check expiration
-    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
-      return c.json({ error: 'Token has expired' }, 401);
-    }
+    // Verify the JWT cryptographically using hono/jwt
+    const payload = await verifyJwt(token, c.env);
 
     // Validate user still exists
     const db = drizzle(c.env.DB);
+    const userId = payload.sub as string;
     const user = await db
       .select()
       .from(users)
-      .where(eq(users.id, payload.sub))
+      .where(eq(users.id, userId))
       .get();
 
     if (!user) {
       return c.json({ error: 'User not found' }, 401);
     }
 
-    c.set('user', { id: payload.sub, email: payload.email });
+    c.set('user', { id: userId, email: payload.email as string });
   } catch {
     return c.json({ error: 'Invalid token' }, 401);
   }

@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { drizzle } from 'drizzle-orm/d1';
 import type { AppType } from '../types';
 import { requireAuth } from '../middleware/auth';
+import { requireRole } from '../middleware/rbac';
 import { workspaces as workspacesTable, workspaceMembers, users } from '../db/schema';
 import { eq } from 'drizzle-orm';
 
@@ -51,7 +52,19 @@ workspaces.post('/', async (c) => {
 
 workspaces.get('/:id', async (c) => {
   const db = drizzle(c.env.DB);
+  const user = c.get('user');
   const id = c.req.param('id');
+  
+  // Check if user is a member
+  const membership = await db
+    .select()
+    .from(workspaceMembers)
+    .where(eq(workspaceMembers.workspaceId, id))
+    .get();
+
+  if (!membership) {
+    return c.json({ error: 'Forbidden: not a workspace member' }, 403);
+  }
   
   const result = await db
     .select()
