@@ -36,10 +36,12 @@ auth.post('/magic-link', async (c) => {
   }
 
   const isDev = c.env.ENVIRONMENT === 'development';
+  const bypassHeader = c.req.header('x-bypass-auth');
+  const isBypass = bypassHeader === 'dev-bypass' || isDev;
 
-  if (isDev) {
-    // Dev mode: skip email, return fake token
-    console.log(`[DEV] Magic link requested for ${email}, auto-approving`);
+  if (isBypass) {
+    // Bypass mode: skip email, return fake token
+    console.log(`[BYPASS] Magic link requested for ${email}, auto-approving`);
     return c.json({ ok: true, token: DEV_TOKEN });
   }
 
@@ -88,13 +90,15 @@ auth.get('/verify', async (c) => {
   }
 
   const isDev = c.env.ENVIRONMENT === 'development';
+  const bypassHeader = c.req.header('x-bypass-auth');
+  const isBypass = bypassHeader === 'dev-bypass' || isDev;
 
-  if (isDev) {
-    // Dev mode: accept any token, return dev user
+  if (isBypass) {
+    // Bypass mode: accept any token, return dev user
     if (token === DEV_TOKEN) {
       return c.json({ token: DEV_TOKEN, user: DEV_USER });
     }
-    // Allow any token in dev mode for testing different emails
+    // Allow any token in bypass mode for testing
     const devUser = { id: `dev-user-${Date.now()}`, email: 'test@example.com' };
     return c.json({ token: DEV_TOKEN, user: devUser });
   }

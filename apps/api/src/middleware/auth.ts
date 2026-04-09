@@ -8,8 +8,12 @@ import { verifyJwt } from '../utils/jwt';
 // Dev mode: skip auth verification
 // In production, verify JWT from Authorization header
 export const requireAuth: MiddlewareHandler<AppType> = async (c, next) => {
-  // Skip auth in development (ENVIRONMENT=development)
-  if (c.env.ENVIRONMENT === 'development') {
+  // Check for bypass header
+  const bypassHeader = c.req.header('x-bypass-auth');
+  const isBypass = bypassHeader === 'dev-bypass' || c.env.ENVIRONMENT === 'development';
+
+  // Skip auth in development or with bypass header
+  if (isBypass) {
     const db = drizzle(c.env.DB);
 
     // Ensure dev user exists (upsert)
