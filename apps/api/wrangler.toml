@@ -6,12 +6,8 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "marketflow-db"
-database_id = "REPLACE_WITH_D1_ID"
+database_id = "1c967a44-a6c4-43e7-bdbd-2e340cac0357"
 migrations_dir = "src/db/migrations"
-
-[[r2_buckets]]
-binding = "ASSETS"
-bucket_name = "marketflow-assets"
 
 [[durable_objects.bindings]]
 name = "SYNC_DOC"
@@ -22,4 +18,4 @@ tag = "v1"
 new_sqlite_classes = ["SyncDocRoom"]
 
 [vars]
-ENVIRONMENT = "development"
+ENVIRONMENT = "production"

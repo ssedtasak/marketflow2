@@ -19,7 +19,7 @@ const queryClient = new QueryClient({
 });
 function AuthenticatedApp() {
     const { isLoading } = useAuth();
-    const [currentView, setCurrentView] = useState('calendar');
+    const [currentView, setCurrentView] = useState('list');
     const [selectedListId, setSelectedListId] = useState(null);
     const [selectedTask, setSelectedTask] = useState(null);
     if (isLoading) {
