@@ -1,14 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useUpdateTask, useList, useWorkspaceMembers, type Task } from '@/hooks/useQueries';
 import { useAuth } from '@/lib/auth-context';
+import { getAllStatuses } from '@/lib/statuses';
 
-const STATUS_OPTIONS = ['todo', 'in_review', 'approved', 'done'] as const;
-const STATUS_LABELS: Record<string, string> = {
-  todo: 'To Do',
-  in_review: 'In Review',
-  approved: 'Approved',
-  done: 'Done',
-};
 const PRIORITY_OPTIONS = ['low', 'normal', 'high', 'urgent'] as const;
 
 interface TaskDetailPanelProps {
@@ -158,9 +152,9 @@ export function TaskDetailPanel({ task, onClose, onUpdated }: TaskDetailPanelPro
               onChange={(e) => setStatus(e.target.value as Task['status'])}
               className="text-sm border border-gray-200/80 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/10 cursor-pointer transition-all duration-200"
             >
-              {STATUS_OPTIONS.map((s) => (
-                <option key={s} value={s}>
-                  {STATUS_LABELS[s]}
+              {getAllStatuses().map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
                 </option>
               ))}
             </select>

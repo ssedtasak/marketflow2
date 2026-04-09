@@ -1,13 +1,8 @@
 import { useState } from 'react';
 import { useTasks, useUpdateTask, useDeleteTask, useCreateTask, type Task } from '@/hooks/useQueries';
+import { getAllStatuses } from '@/lib/statuses';
 
-const STATUS_OPTIONS = ['todo', 'in_review', 'approved', 'done'] as const;
-const STATUS_LABELS: Record<string, string> = {
-  todo: 'To Do',
-  in_review: 'In Review',
-  approved: 'Approved',
-  done: 'Done',
-};
+const PRIORITY_OPTIONS = ['low', 'normal', 'high', 'urgent'] as const;
 
 interface ListViewProps {
   listId: string;
@@ -22,12 +17,38 @@ export function ListView({ listId, onSelectTask }: ListViewProps) {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [showNewTask, setShowNewTask] = useState(false);
 
+  const statuses = getAllStatuses();
+
   const handleStatusChange = async (task: Task, newStatus: string) => {
     try {
       await updateTask.mutateAsync({
         id: task.id,
         listId,
         data: { status: newStatus },
+      });
+    } catch {
+      // error handled by mutation
+    }
+  };
+
+  const handlePriorityChange = async (task: Task, newPriority: string) => {
+    try {
+      await updateTask.mutateAsync({
+        id: task.id,
+        listId,
+        data: { priority: newPriority || undefined },
+      });
+    } catch {
+      // error handled by mutation
+    }
+  };
+
+  const handleDueDateChange = async (task: Task, newDueDate: string) => {
+    try {
+      await updateTask.mutateAsync({
+        id: task.id,
+        listId,
+        data: { dueDate: newDueDate || null },
       });
     } catch {
       // error handled by mutation
@@ -157,35 +178,40 @@ export function ListView({ listId, onSelectTask }: ListViewProps) {
                     onChange={(e) => handleStatusChange(task, e.target.value)}
                     className="text-xs border border-gray-200/80 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/10 cursor-pointer transition-all duration-200"
                   >
-                    {STATUS_OPTIONS.map((s) => (
-                      <option key={s} value={s}>
-                        {STATUS_LABELS[s]}
+                    {statuses.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.label}
                       </option>
                     ))}
                   </select>
                 </td>
                 <td className="px-4 py-3.5">
-                  <span
-                    className={`text-[11px] px-2.5 py-1 rounded-full font-medium ${
+                  <select
+                    value={task.priority ?? ''}
+                    onChange={(e) => handlePriorityChange(task, e.target.value)}
+                    className={`text-xs border rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/10 cursor-pointer transition-all duration-200 ${
                       task.priority === 'urgent'
-                        ? 'bg-red-50 text-red-600'
+                        ? 'border-red-200/80 text-red-600'
                         : task.priority === 'high'
-                        ? 'bg-orange-50 text-orange-600'
-                        : task.priority === 'normal'
-                        ? 'bg-gray-100 text-gray-600'
-                        : 'bg-gray-100 text-gray-400'
+                        ? 'border-orange-200/80 text-orange-600'
+                        : 'border-gray-200/80 text-gray-600'
                     }`}
                   >
-                    {task.priority ?? '—'}
-                  </span>
+                    <option value="">None</option>
+                    {PRIORITY_OPTIONS.map((p) => (
+                      <option key={p} value={p}>
+                        {p.charAt(0).toUpperCase() + p.slice(1)}
+                      </option>
+                    ))}
+                  </select>
                 </td>
-                <td className="px-4 py-3.5 text-sm text-gray-500">
-                  {task.dueDate
-                    ? new Date(task.dueDate).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                      })
-                    : '—'}
+                <td className="px-4 py-3.5">
+                  <input
+                    type="date"
+                    value={task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ''}
+                    onChange={(e) => handleDueDateChange(task, e.target.value)}
+                    className="text-xs border border-gray-200/80 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/10 cursor-pointer transition-all duration-200 text-gray-500"
+                  />
                 </td>
                 <td className="px-4 py-3.5">
                   {task.needsApproval ? (

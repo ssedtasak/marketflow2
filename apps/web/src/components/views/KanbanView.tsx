@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   DndContext,
   DragOverlay,
-  closestCorners,
   PointerSensor,
   useSensor,
   useSensors,
+  useDroppable,
   type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core';
@@ -16,13 +16,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useTasks, useUpdateTask, type Task } from '@/hooks/useQueries';
-
-const COLUMNS: { id: string; label: string }[] = [
-  { id: 'todo', label: 'To Do' },
-  { id: 'in_review', label: 'In Review' },
-  { id: 'approved', label: 'Approved' },
-  { id: 'done', label: 'Done' },
-];
+import { getAllStatuses, type StatusConfig } from '@/lib/statuses';
 
 interface KanbanViewProps {
   listId: string;
@@ -113,15 +107,17 @@ function TaskCard({ task, onClick }: TaskCardProps) {
   );
 }
 
-function Column({
+function DroppableColumn({
   column,
   tasks,
   onTaskClick,
 }: {
-  column: { id: string; label: string };
+  column: StatusConfig;
   tasks: Task[];
   onTaskClick: (task: Task) => void;
 }) {
+  const { setNodeRef, isOver } = useDroppable({ id: column.id });
+
   return (
     <div className="flex flex-col w-72 flex-shrink-0 bg-gray-50/50 rounded-2xl">
       {/* Column header */}
@@ -133,14 +129,21 @@ function Column({
       </div>
 
       {/* Droppable area */}
-      <div className="flex-1 overflow-y-auto px-3 pb-3">
+      <div
+        ref={setNodeRef}
+        className={`flex-1 overflow-y-auto px-3 pb-3 min-h-[80px] rounded-xl transition-colors duration-200 ${
+          isOver ? 'bg-gray-100/80 ring-2 ring-gray-300/50 ring-inset' : ''
+        }`}
+      >
         <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
           {tasks.map((task) => (
             <TaskCard key={task.id} task={task} onClick={() => onTaskClick(task)} />
           ))}
         </SortableContext>
         {tasks.length === 0 && (
-          <div className="border-2 border-dashed border-gray-200/80 rounded-xl p-6 text-center">
+          <div className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors duration-200 ${
+            isOver ? 'border-gray-400 bg-gray-100/50' : 'border-gray-200/80'
+          }`}>
             <p className="text-xs text-gray-400">Drop tasks here</p>
           </div>
         )}
@@ -153,12 +156,23 @@ export function KanbanView({ listId, onSelectTask }: KanbanViewProps) {
   const { data: tasks = [], isLoading } = useTasks(listId);
   const updateTask = useUpdateTask();
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [columns, setColumns] = useState<StatusConfig[]>(getAllStatuses());
+
+  // Refresh columns from localStorage on mount/focus
+  useEffect(() => {
+    const refresh = () => setColumns(getAllStatuses());
+    refresh();
+    window.addEventListener('focus', refresh);
+    return () => window.removeEventListener('focus', refresh);
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
 
-  const tasksByStatus = COLUMNS.reduce<Record<string, Task[]>>(
+  const columnIds = columns.map((c) => c.id);
+
+  const tasksByStatus = columns.reduce<Record<string, Task[]>>(
     (acc, col) => {
       acc[col.id] = tasks.filter((t) => t.status === col.id);
       return acc;
@@ -176,23 +190,27 @@ export function KanbanView({ listId, onSelectTask }: KanbanViewProps) {
     const { active, over } = event;
     if (!over) return;
 
-    const overTask = tasks.find((t) => t.id === over.id);
-    const targetStatus = overTask?.status ?? (over.id as string);
-
     const task = tasks.find((t) => t.id === active.id);
     if (!task) return;
 
-    let newStatus = targetStatus;
-    if (!COLUMNS.find((c) => c.id === targetStatus)) {
-      newStatus = task.status;
+    // Determine target status: could be a column ID or a task ID
+    let targetStatus: string | undefined;
+
+    if (columnIds.includes(over.id as string)) {
+      // Dropped directly on a column (empty column case)
+      targetStatus = over.id as string;
+    } else {
+      // Dropped on a task — use that task's status
+      const overTask = tasks.find((t) => t.id === over.id);
+      targetStatus = overTask?.status;
     }
 
-    if (newStatus !== task.status) {
+    if (targetStatus && targetStatus !== task.status) {
       try {
         await updateTask.mutateAsync({
           id: task.id,
           listId,
-          data: { status: newStatus },
+          data: { status: targetStatus },
         });
       } catch {
         // error handled by mutation
@@ -219,13 +237,35 @@ export function KanbanView({ listId, onSelectTask }: KanbanViewProps) {
       <div className="flex-1 overflow-x-auto overflow-y-hidden">
         <DndContext
           sensors={sensors}
-          collisionDetection={closestCorners}
+          collisionDetection={(args) => {
+            // Custom collision: check droppable columns first, then default
+            const { droppableContainers, active } = args;
+            const activeRect = active.rect.current.translated;
+            if (!activeRect) return [];
+
+            // Check each column container for overlap
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const collisions: any[] = [];
+            for (const container of droppableContainers) {
+              const rect = container.rect.current;
+              if (!rect) continue;
+              if (
+                activeRect.left < rect.right &&
+                activeRect.right > rect.left &&
+                activeRect.top < rect.bottom &&
+                activeRect.bottom > rect.top
+              ) {
+                collisions.push({ id: container.id, data: { value: 0 } });
+              }
+            }
+            return collisions;
+          }}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
           <div className="flex gap-4 p-6 h-full">
-            {COLUMNS.map((column) => (
-              <Column
+            {columns.map((column) => (
+              <DroppableColumn
                 key={column.id}
                 column={column}
                 tasks={tasksByStatus[column.id] ?? []}

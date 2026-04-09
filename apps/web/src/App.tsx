@@ -25,6 +25,9 @@ function AuthenticatedApp() {
   const { isLoading } = useAuth();
   const [currentView, setCurrentView] = useState<View>('list');
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
+  const handleSelectList = (listId: string) => {
+    setSelectedListId(listId || null);
+  };
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   if (isLoading) {
@@ -46,7 +49,7 @@ function AuthenticatedApp() {
     <div className="min-h-screen flex bg-white">
       <Sidebar
         selectedListId={selectedListId}
-        onSelectList={setSelectedListId}
+        onSelectList={handleSelectList}
         onSelectView={setCurrentView}
         currentView={currentView}
       />
