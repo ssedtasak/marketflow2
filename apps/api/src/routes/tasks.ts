@@ -1,22 +1,59 @@
 import { Hono } from 'hono';
 import { drizzle } from 'drizzle-orm/d1';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import type { AppType } from '../types';
 import { requireAuth } from '../middleware/auth';
-import { tasks as tasksTable } from '../db/schema';
+import { tasks as tasksTable, lists as listsTable, workspaceMembers } from '../db/schema';
 import { createTaskSchema, updateTaskSchema } from '@marketflow/shared/schemas';
 
 export const tasks = new Hono<AppType>();
 
 tasks.use('*', requireAuth);
 
+async function requireWorkspaceMember(db: ReturnType<typeof drizzle>, workspaceId: string, userId: string): Promise<boolean> {
+  const member = await db
+    .select()
+    .from(workspaceMembers)
+    .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, userId)))
+    .get();
+  return !!member;
+}
+
+async function getTaskWorkspaceId(db: ReturnType<typeof drizzle>, taskId: string): Promise<string | null> {
+  const task = await db
+    .select({ workspaceId: listsTable.workspaceId })
+    .from(tasksTable)
+    .innerJoin(listsTable, eq(tasksTable.listId, listsTable.id))
+    .where(eq(tasksTable.id, taskId))
+    .get();
+  return task?.workspaceId ?? null;
+}
+
 // GET /tasks?listId=X — list all tasks in a list
 tasks.get('/', async (c) => {
   const db = drizzle(c.env.DB);
+  const user = c.get('user');
   const listId = c.req.query('listId');
 
   if (!listId) {
     return c.json({ error: 'listId query parameter is required' }, 400);
+  }
+
+  // Get list to find workspaceId
+  const list = await db
+    .select()
+    .from(listsTable)
+    .where(eq(listsTable.id, listId))
+    .get();
+
+  if (!list) {
+    return c.json({ error: 'List not found' }, 404);
+  }
+
+  // Check user is workspace member
+  const isMember = await requireWorkspaceMember(db, list.workspaceId, user.id);
+  if (!isMember) {
+    return c.json({ error: 'Forbidden: not a workspace member' }, 403);
   }
 
   const results = await db
@@ -40,6 +77,24 @@ tasks.post('/', async (c) => {
   }
 
   const data = parsed.data;
+
+  // Get list to check workspace membership
+  const list = await db
+    .select()
+    .from(listsTable)
+    .where(eq(listsTable.id, data.listId))
+    .get();
+
+  if (!list) {
+    return c.json({ error: 'List not found' }, 404);
+  }
+
+  // Check user is workspace member
+  const isMember = await requireWorkspaceMember(db, list.workspaceId, user.id);
+  if (!isMember) {
+    return c.json({ error: 'Forbidden: not a workspace member' }, 403);
+  }
+
   const id = crypto.randomUUID();
   const now = new Date();
   const finalPosition = data.position ?? crypto.randomUUID();
@@ -65,6 +120,7 @@ tasks.post('/', async (c) => {
 // GET /tasks/:id — get single task
 tasks.get('/:id', async (c) => {
   const db = drizzle(c.env.DB);
+  const user = c.get('user');
   const id = c.req.param('id');
 
   const result = await db
@@ -77,6 +133,16 @@ tasks.get('/:id', async (c) => {
     return c.json({ error: 'Task not found' }, 404);
   }
 
+  // Check user is workspace member
+  const workspaceId = await getTaskWorkspaceId(db, id);
+  if (!workspaceId) {
+    return c.json({ error: 'Task not found' }, 404);
+  }
+  const isMember = await requireWorkspaceMember(db, workspaceId, user.id);
+  if (!isMember) {
+    return c.json({ error: 'Forbidden: not a workspace member' }, 403);
+  }
+
   return c.json(result);
 });
 
@@ -86,6 +152,15 @@ tasks.patch('/:id', async (c) => {
   const user = c.get('user');
   const id = c.req.param('id');
   const body = await c.req.json();
+
+  // Check user is workspace member before any operation
+  const workspaceId = await getTaskWorkspaceId(db, id);
+  if (workspaceId) {
+    const isMember = await requireWorkspaceMember(db, workspaceId, user.id);
+    if (!isMember) {
+      return c.json({ error: 'Forbidden: not a workspace member' }, 403);
+    }
+  }
 
   const parsed = updateTaskSchema.safeParse(body);
   if (!parsed.success) {
@@ -157,7 +232,18 @@ tasks.patch('/:id', async (c) => {
 // DELETE /tasks/:id — delete a task
 tasks.delete('/:id', async (c) => {
   const db = drizzle(c.env.DB);
+  const user = c.get('user');
   const id = c.req.param('id');
+
+  // Check user is workspace member
+  const workspaceId = await getTaskWorkspaceId(db, id);
+  if (!workspaceId) {
+    return c.json({ error: 'Task not found' }, 404);
+  }
+  const isMember = await requireWorkspaceMember(db, workspaceId, user.id);
+  if (!isMember) {
+    return c.json({ error: 'Forbidden: not a workspace member' }, 403);
+  }
 
   // Verify task exists
   const existing = await db

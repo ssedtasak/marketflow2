@@ -1,21 +1,37 @@
 import { Hono } from 'hono';
 import { drizzle } from 'drizzle-orm/d1';
-import { eq } from 'drizzle-orm';
-import type { Env } from '../index';
+import { eq, and } from 'drizzle-orm';
+import type { AppType } from '../types';
 import { requireAuth } from '../middleware/auth';
-import { lists as listsTable } from '../db/schema';
+import { lists as listsTable, workspaceMembers } from '../db/schema';
 import { createListSchema, updateListSchema } from '@marketflow/shared/schemas';
 
-export const lists = new Hono<{ Bindings: Env }>();
+async function requireWorkspaceMember(db: ReturnType<typeof drizzle>, workspaceId: string, userId: string): Promise<boolean> {
+  const member = await db
+    .select()
+    .from(workspaceMembers)
+    .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, userId)))
+    .get();
+  return !!member;
+}
+
+export const lists = new Hono<AppType>();
 lists.use('*', requireAuth);
 
 // GET /lists?workspaceId=X — list all lists in a workspace
 lists.get('/', async (c) => {
   const db = drizzle(c.env.DB);
+  const user = c.get('user');
   const workspaceId = c.req.query('workspaceId');
 
   if (!workspaceId) {
     return c.json({ error: 'workspaceId query parameter is required' }, 400);
+  }
+
+  // Check user is workspace member
+  const isMember = await requireWorkspaceMember(db, workspaceId, user.id);
+  if (!isMember) {
+    return c.json({ error: 'Forbidden: not a workspace member' }, 403);
   }
 
   const results = await db
@@ -30,6 +46,7 @@ lists.get('/', async (c) => {
 // GET /lists/:id — get a single list
 lists.get('/:id', async (c) => {
   const db = drizzle(c.env.DB);
+  const user = c.get('user');
   const id = c.req.param('id');
 
   const result = await db
@@ -40,6 +57,12 @@ lists.get('/:id', async (c) => {
 
   if (!result) {
     return c.json({ error: 'List not found' }, 404);
+  }
+
+  // Check user is workspace member
+  const isMember = await requireWorkspaceMember(db, result.workspaceId, user.id);
+  if (!isMember) {
+    return c.json({ error: 'Forbidden: not a workspace member' }, 403);
   }
 
   return c.json(result);
@@ -79,6 +102,7 @@ lists.post('/', async (c) => {
 // PATCH /lists/:id — update a list
 lists.patch('/:id', async (c) => {
   const db = drizzle(c.env.DB);
+  const user = c.get('user');
   const id = c.req.param('id');
   const body = await c.req.json();
 
@@ -96,6 +120,12 @@ lists.patch('/:id', async (c) => {
 
   if (!existing) {
     return c.json({ error: 'List not found' }, 404);
+  }
+
+  // Check user is workspace member
+  const isMember = await requireWorkspaceMember(db, existing.workspaceId, user.id);
+  if (!isMember) {
+    return c.json({ error: 'Forbidden: not a workspace member' }, 403);
   }
 
   // Build update object from parsed data (only defined fields)
@@ -120,6 +150,7 @@ lists.patch('/:id', async (c) => {
 // DELETE /lists/:id — delete a list
 lists.delete('/:id', async (c) => {
   const db = drizzle(c.env.DB);
+  const user = c.get('user');
   const id = c.req.param('id');
 
   // Check list exists
@@ -131,6 +162,12 @@ lists.delete('/:id', async (c) => {
 
   if (!existing) {
     return c.json({ error: 'List not found' }, 404);
+  }
+
+  // Check user is workspace member
+  const isMember = await requireWorkspaceMember(db, existing.workspaceId, user.id);
+  if (!isMember) {
+    return c.json({ error: 'Forbidden: not a workspace member' }, 403);
   }
 
   await db
