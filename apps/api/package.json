@@ -1,0 +1,29 @@
+{
+  "name": "@marketflow/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "build": "wrangler deploy --dry-run --outdir=dist",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "wrangler d1 migrations apply marketflow-db --local",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "hono": "^4.6.0",
+    "drizzle-orm": "^0.33.0",
+    "zod": "^3.23.0",
+    "yjs": "^13.6.0",
+    "y-protocols": "^1.0.6",
+    "@marketflow/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240800.0",
+    "drizzle-kit": "^0.24.0",
+    "typescript": "^5.5.0",
+    "wrangler": "^3.80.0"
+  }
+}

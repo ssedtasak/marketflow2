@@ -1,0 +1,25 @@
+name = "marketflow-api"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "marketflow-db"
+database_id = "REPLACE_WITH_D1_ID"
+migrations_dir = "src/db/migrations"
+
+[[r2_buckets]]
+binding = "ASSETS"
+bucket_name = "marketflow-assets"
+
+[[durable_objects.bindings]]
+name = "SYNC_DOC"
+class_name = "SyncDocRoom"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["SyncDocRoom"]
+
+[vars]
+ENVIRONMENT = "development"
