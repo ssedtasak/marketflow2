@@ -57,12 +57,13 @@ lists.post('/', async (c) => {
 
   const { workspaceId, name, position, defaultView } = parsed.data;
   const id = crypto.randomUUID();
+  const finalPosition = position ?? crypto.randomUUID();
 
   await db.insert(listsTable).values({
     id,
     workspaceId,
     name,
-    position,
+    position: finalPosition,
     defaultView: defaultView ?? 'calendar',
   }).execute();
 
@@ -70,7 +71,7 @@ lists.post('/', async (c) => {
     id,
     workspaceId,
     name,
-    position,
+    position: finalPosition,
     defaultView: defaultView ?? 'calendar',
   }, 201);
 });

@@ -42,12 +42,13 @@ tasks.post('/', async (c) => {
   const data = parsed.data;
   const id = crypto.randomUUID();
   const now = new Date();
+  const finalPosition = data.position ?? crypto.randomUUID();
 
   const insertValues = {
     id,
     listId: data.listId,
     title: data.title,
-    position: data.position,
+    position: finalPosition,
     status: data.status ?? 'todo',
     priority: data.priority ?? null,
     assigneeId: data.assigneeId ?? null,
