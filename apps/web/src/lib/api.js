@@ -1,4 +1,5 @@
 export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8787';
+const IS_PROD = import.meta.env.VITE_ENVIRONMENT === 'production';
 export class ApiError extends Error {
     status;
     body;
@@ -16,6 +17,10 @@ async function apiRequest(endpoint, options = {}) {
     };
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
+    }
+    // Add bypass header in development
+    if (!IS_PROD) {
+        headers['x-bypass-auth'] = 'dev-bypass';
     }
     const res = await fetch(`${API_URL}${endpoint}`, {
         method,

@@ -8,7 +8,19 @@ export function AuthProvider({ children }) {
     const [token, setToken] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     useEffect(() => {
-        // Dev mode bypass: always auto-login as dev user in local development
+        // Only use dev bypass in development environment
+        if (import.meta.env.VITE_ENVIRONMENT === 'production') {
+            // Production: require real auth via login()
+            const storedToken = localStorage.getItem(TOKEN_KEY);
+            const storedUser = localStorage.getItem(USER_KEY);
+            if (storedToken && storedUser) {
+                setToken(storedToken);
+                setUser(JSON.parse(storedUser));
+            }
+            setIsLoading(false);
+            return;
+        }
+        // Dev mode bypass: auto-login as dev user
         const devToken = 'dev-token';
         const devUser = { id: 'dev-user-1', email: 'dev@example.com' };
         setToken(devToken);
