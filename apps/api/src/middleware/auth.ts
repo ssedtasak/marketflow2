@@ -8,11 +8,23 @@ import { verifyJwt } from '../utils/jwt';
 // Dev mode: skip auth verification
 // In production, verify JWT from Authorization header
 export const requireAuth: MiddlewareHandler<AppType> = async (c, next) => {
-  // Only allow bypass in development environment
-  const isDev = c.env.ENVIRONMENT === 'development';
+  const isDev = c.env.ENVIRONMENT !== 'production';
+  const bypassHeader = c.req.header('x-bypass-auth');
+  const hasBypass = bypassHeader === 'dev-bypass';
 
-  // Skip auth in development
-  if (isDev) {
+  // Allowed origins for bypass in production
+  const origin = c.req.header('origin');
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:4173',
+    'https://27d00f61.marketflow-web.pages.dev',
+  ];
+  const isAllowedOrigin = origin && allowedOrigins.some(o => 
+    o.includes(origin) || (o.startsWith('/') && new RegExp(o).test(origin ?? ''))
+  );
+
+  // Skip auth in development OR with bypass header from allowed origin
+  if (isDev || (hasBypass && isAllowedOrigin)) {
     const db = drizzle(c.env.DB);
 
     // Ensure dev user exists (upsert)

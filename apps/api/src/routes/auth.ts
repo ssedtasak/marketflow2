@@ -35,11 +35,19 @@ auth.post('/magic-link', async (c) => {
     return c.json({ error: 'Email is required' }, 400);
   }
 
-  const isDev = c.env.ENVIRONMENT === 'development';
+  const isDev = c.env.ENVIRONMENT !== 'production';
+  const bypassHeader = c.req.header('x-bypass-auth');
+  const hasBypass = bypassHeader === 'dev-bypass';
 
-  // Only bypass in development environment
-  if (isDev) {
-    // Bypass mode: skip email, return fake token
+  // Allowed origins for bypass
+  const origin = c.req.header('origin');
+  const isAllowedOrigin = origin && (
+    origin.includes('localhost') || 
+    origin.includes('27d00f61.marketflow-web.pages.dev')
+  );
+
+  // Bypass in development OR with bypass header from allowed origin
+  if (isDev || (hasBypass && isAllowedOrigin)) {
     console.log(`[BYPASS] Magic link requested for ${email}, auto-approving`);
     return c.json({ ok: true, token: DEV_TOKEN });
   }
@@ -88,15 +96,22 @@ auth.get('/verify', async (c) => {
     return c.json({ error: 'Token is required' }, 400);
   }
 
-  const isDev = c.env.ENVIRONMENT === 'development';
+  const isDev = c.env.ENVIRONMENT !== 'production';
+  const bypassHeader = c.req.header('x-bypass-auth');
+  const hasBypass = bypassHeader === 'dev-bypass';
 
-  // Only bypass in development environment
-  if (isDev) {
-    // Bypass mode: accept any token, return dev user
+  // Allowed origins for bypass
+  const origin = c.req.header('origin');
+  const isAllowedOrigin = origin && (
+    origin.includes('localhost') || 
+    origin.includes('27d00f61.marketflow-web.pages.dev')
+  );
+
+  // Bypass in development OR with bypass header from allowed origin
+  if (isDev || (hasBypass && isAllowedOrigin)) {
     if (token === DEV_TOKEN) {
       return c.json({ token: DEV_TOKEN, user: DEV_USER });
     }
-    // Allow any token in dev mode for testing
     const devUser = { id: `dev-user-${Date.now()}`, email: 'test@example.com' };
     return c.json({ token: DEV_TOKEN, user: devUser });
   }

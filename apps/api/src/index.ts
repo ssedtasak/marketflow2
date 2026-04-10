@@ -18,7 +18,11 @@ export type Env = {
 const app = new Hono<{ Bindings: Env }>();
 
 app.use('*', cors({
-  origin: ['http://localhost:5173', 'http://localhost:4173'],
+  origin: [
+    'http://localhost:5173', 
+    'http://localhost:4173',
+    'https://27d00f61.marketflow-web.pages.dev',
+  ],
   credentials: true,
 }));
 app.onError(errorHandler);
