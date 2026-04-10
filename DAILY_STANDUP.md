@@ -1,6 +1,75 @@
 # Daily Standup & Learning Log
 
-## 2026-04-10
+## 2026-04-10 (Continued - Evening)
+
+### UX Improvements Completed:
+- **Kanban drag-and-drop fixed** - Now uses useDroppable for columns
+- **Delete workspace function** - Added with admin-only RBAC check
+- **Delete list function** - Trash icon in sidebar
+- **Inline editing** - Priority and due date editable in ListView
+- **Assignee display** - Shows in ListView column and Kanban cards
+- **Custom status management** - Add/remove statuses via "Manage Statuses"
+- **Kanban column reorder** - Drag headers to change order (saved to localStorage)
+- **React error boundary** - No more white screen crashes
+- **Calendar as default view** - Changed from List to Calendar
+
+### Security Fixes:
+- **Cascade delete** - Workspace delete now removes lists, tasks, members
+- **POST /lists auth check** - Now requires workspace membership
+- **GET /workspaces/:id/members auth** - Now checks membership
+- **CORS flexible** - Accepts any marketflow-web.pages.dev subdomain
+- **Auth bypass locked** - Only works from allowed origins
+
+### Critical Bug Fixed:
+- **Stale .js files** - 18 compiled .js files were conflicting with .tsx
+- **Root cause**: tsconfig.json was missing `noEmit: true`
+- **Fix**: Added `"noEmit": true` to apps/web/tsconfig.json
+- **Prevention**: TypeScript will now only typecheck, not emit .js files
+
+### Deployment URLs:
+| Component | Status | URL |
+|----------|--------|-----|
+| Frontend | ✅ Deployed | https://2e10dfb8.marketflow-web.pages.dev |
+| API | ✅ Deployed | https://marketflow-api.ssedtasak.workers.dev |
+| Database | ✅ Ready | Cloudflare D1 |
+
+### CTO Review Findings:
+| Severity | Count | Top Issues |
+|----------|-------|------------|
+| Critical | 3 | .js files ✅, Auth stubs, SyncDoc |
+| High | 8 | CORS, cascade deletes, validation |
+| Medium | 10 | Error handling, real-time |
+| Low | 4 | Code hygiene |
+
+### Self-Learning System
+
+**Memory entities:**
+- `MarketFlow` - Project overview
+- `TechDecisions` - Key architectural choices
+- `Phase2Lessons` - Past bugs and fixes
+- `SecurityFixes` - Security lessons
+- `P1SecurityImplementation` - JWT/RBAC details
+- `CommonBugs` - Recurring issues
+
+### Common Bugs (Auto-Learned)
+
+| Issue | Solution |
+|-------|----------|
+| Stale .js files cause errors | Delete them + add `noEmit: true` to tsconfig |
+| CORS blocked | Add domain to allowed origins or use wildcard |
+| ENVIRONMENT blocks bypass | Dev bypass only works with `x-bypass-auth` header |
+| TypeScript emits .js | Add `"noEmit": true` to tsconfig.json |
+
+### Before Starting Next Day
+
+1. Run `pnpm typecheck` to verify no errors
+2. Check for .js files: `find apps/web/src -name "*.js"` - delete any stale ones
+3. Verify tsconfig.json has `"noEmit": true`
+4. Test frontend: https://2e10dfb8.marketflow-web.pages.dev
+
+---
+
+## 2026-04-10 (Morning)
 
 ### What We Did
 
@@ -27,39 +96,6 @@
 2. **RBAC stub** - Implemented real role checking (admin/member/viewer)
 3. **Auth bypass in production** - auth-context.tsx now checks VITE_ENVIRONMENT
 4. **Stub routes security** - Removed folders/comments/uploads endpoints
-
-### Self-Learning System
-
-**Memory entities added:**
-- `MarketFlow` - Project overview
-- `TechDecisions` - Key architectural choices
-- `Phase2Lessons` - Past bugs and fixes
-- `SecurityFixes` - Security lessons
-- `P1SecurityImplementation` - JWT/RBAC details
-- `CommonBugs` - Recurring issues
-
-**Pre-flight checklist (QA & DevOps agents):**
-1. Run `pnpm typecheck`
-2. Check local DB tables exist
-3. Run migrations if needed
-4. Verify ENVIRONMENT setting
-5. Build before deploy
-
-### Common Bugs (Auto-Learned)
-
-| Issue | Solution |
-|-------|----------|
-| Local DB tables missing | `wrangler d1 execute --local --file=migrations/*.sql` |
-| ENVIRONMENT blocks dev bypass | Set to 'development' for local, 'production' for deploy |
-| Remote DB not updated | Apply migrations with `--remote` flag |
-| Dev token doesn't work | Production mode requires real magic link auth |
-
-### Before Starting Next Day
-
-1. Run `pnpm typecheck` to verify no errors
-2. Check memory: `memory___search_nodes({ query: "CommonBugs" })`
-3. Run pre-flight checklist if deploying
-4. Test locally before testing on production
 
 ---
 
