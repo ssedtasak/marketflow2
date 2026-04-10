@@ -43,7 +43,8 @@ auth.post('/magic-link', async (c) => {
   const origin = c.req.header('origin');
   const isAllowedOrigin = origin && (
     origin.includes('localhost') || 
-    origin.includes('27d00f61.marketflow-web.pages.dev')
+    origin.includes('27d00f61') ||
+    origin.includes('f7d1e21a')
   );
 
   // Bypass in development OR with bypass header from allowed origin
@@ -104,7 +105,8 @@ auth.get('/verify', async (c) => {
   const origin = c.req.header('origin');
   const isAllowedOrigin = origin && (
     origin.includes('localhost') || 
-    origin.includes('27d00f61.marketflow-web.pages.dev')
+    origin.includes('27d00f61') ||
+    origin.includes('f7d1e21a')
   );
 
   // Bypass in development OR with bypass header from allowed origin

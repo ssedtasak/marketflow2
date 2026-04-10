@@ -18,9 +18,12 @@ export const requireAuth: MiddlewareHandler<AppType> = async (c, next) => {
     'http://localhost:5173',
     'http://localhost:4173',
     'https://27d00f61.marketflow-web.pages.dev',
+    'https://f7d1e21a.marketflow-web.pages.dev',
   ];
-  const isAllowedOrigin = origin && allowedOrigins.some(o => 
-    o.includes(origin) || (o.startsWith('/') && new RegExp(o).test(origin ?? ''))
+  const isAllowedOrigin = origin && (
+    origin.includes('localhost') || 
+    origin.includes('27d00f61') ||
+    origin.includes('f7d1e21a')
   );
 
   // Skip auth in development OR with bypass header from allowed origin

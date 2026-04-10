@@ -22,6 +22,7 @@ app.use('*', cors({
     'http://localhost:5173', 
     'http://localhost:4173',
     'https://27d00f61.marketflow-web.pages.dev',
+    'https://f7d1e21a.marketflow-web.pages.dev',
   ],
   credentials: true,
 }));
