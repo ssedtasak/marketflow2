@@ -17,6 +17,7 @@ const STATUS_COLORS: Record<string, string> = {
   in_review: 'bg-yellow-50 text-yellow-700',
   approved: 'bg-green-50 text-green-700',
   done: 'bg-blue-50 text-blue-700',
+  // Default for custom statuses
 };
 
 export function CalendarView({ listId, onSelectTask }: CalendarViewProps) {
@@ -135,7 +136,7 @@ export function CalendarView({ listId, onSelectTask }: CalendarViewProps) {
                       type="button"
                       key={task.id}
                       onClick={() => onSelectTask(task)}
-                      className={`w-full text-left text-[11px] truncate px-2 py-1 rounded-lg ${STATUS_COLORS[task.status] ?? ''} hover:opacity-80 transition-opacity duration-200`}
+                      className={`w-full text-left text-[11px] truncate px-2 py-1 rounded-lg ${STATUS_COLORS[task.status] ?? 'bg-gray-100 text-gray-600'} hover:opacity-80 transition-opacity duration-200`}
                     >
                       {task.title}
                     </button>

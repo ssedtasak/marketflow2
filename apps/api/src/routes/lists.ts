@@ -71,6 +71,7 @@ lists.get('/:id', async (c) => {
 // POST /lists — create a new list
 lists.post('/', async (c) => {
   const db = drizzle(c.env.DB);
+  const user = c.get('user');
   const body = await c.req.json();
 
   const parsed = createListSchema.safeParse(body);
@@ -79,6 +80,13 @@ lists.post('/', async (c) => {
   }
 
   const { workspaceId, name, position, defaultView } = parsed.data;
+
+  // Check user is workspace member
+  const isMember = await requireWorkspaceMember(db, workspaceId, user.id);
+  if (!isMember) {
+    return c.json({ error: 'Forbidden: not a workspace member' }, 403);
+  }
+
   const id = crypto.randomUUID();
   const finalPosition = position ?? crypto.randomUUID();
 

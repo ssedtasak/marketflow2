@@ -243,7 +243,8 @@ export function Sidebar({
               <button
                 type="button"
                 onClick={handleDeleteWorkspace}
-                className="text-gray-300 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-all duration-200 flex-shrink-0"
+                disabled={deleteWs.isPending}
+                className={`text-gray-300 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-all duration-200 flex-shrink-0 ${deleteWs.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
                 title="Delete workspace"
               >
                 <svg className="h-3.5 w-3.5" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -263,7 +264,8 @@ export function Sidebar({
               />
               <button 
                 type="submit" 
-                className="px-3 py-2 text-xs text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-all duration-200 active:scale-[0.98]"
+                disabled={createWs.isPending}
+                className={`px-3 py-2 text-xs text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-all duration-200 active:scale-[0.98] ${createWs.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 Add
               </button>
@@ -374,7 +376,8 @@ export function Sidebar({
               />
               <button 
                 type="submit" 
-                className="px-3 py-2 text-xs text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-all duration-200 active:scale-[0.98]"
+                disabled={createList.isPending}
+                className={`px-3 py-2 text-xs text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-all duration-200 active:scale-[0.98] ${createList.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 Add
               </button>
@@ -415,7 +418,8 @@ export function Sidebar({
               <button
                 type="button"
                 onClick={() => handleDeleteList(list.id, list.name)}
-                className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 p-1.5 mr-1 rounded-md hover:bg-red-50 transition-all duration-200"
+                disabled={deleteList.isPending}
+                className={`text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 p-1.5 mr-1 rounded-md hover:bg-red-50 transition-all duration-200 ${deleteList.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
                 title="Delete list"
               >
                 <svg className="h-3.5 w-3.5" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">

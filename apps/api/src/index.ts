@@ -17,7 +17,10 @@ export type Env = {
 
 const app = new Hono<{ Bindings: Env }>();
 
-app.use('*', cors());
+app.use('*', cors({
+  origin: ['http://localhost:5173', 'http://localhost:4173'],
+  credentials: true,
+}));
 app.onError(errorHandler);
 
 app.get('/', (c) => c.json({ name: 'MarketFlow API', status: 'ok' }));

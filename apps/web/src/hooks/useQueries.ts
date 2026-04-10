@@ -148,7 +148,7 @@ export interface Task {
   id: string;
   listId: string;
   title: string;
-  status: 'todo' | 'in_review' | 'approved' | 'done';
+  status: string;
   priority: 'low' | 'normal' | 'high' | 'urgent' | null;
   assigneeId: string | null;
   dueDate: string | null;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { Component, type ReactNode, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
 import { MagicLinkForm } from '@/components/auth/MagicLinkForm';
@@ -9,6 +9,34 @@ import { ListView } from '@/components/views/ListView';
 import { KanbanView } from '@/components/views/KanbanView';
 import { TaskDetailPanel } from '@/components/views/TaskDetailPanel';
 import type { Task } from '@/hooks/useQueries';
+
+class ErrorBoundary extends Component<
+  { children: ReactNode; fallback?: ReactNode },
+  { hasError: boolean }
+> {
+  override state = { hasError: false };
+  override componentDidCatch() {
+    this.setState({ hasError: true });
+  }
+  override render() {
+    if (this.state.hasError) {
+      return this.props.fallback ?? (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center p-6">
+            <p className="text-lg font-medium text-gray-900 mb-2">Something went wrong</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm"
+            >
+              Reload
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,7 +51,7 @@ type View = 'calendar' | 'list' | 'kanban';
 
 function AuthenticatedApp() {
   const { isLoading } = useAuth();
-  const [currentView, setCurrentView] = useState<View>('list');
+  const [currentView, setCurrentView] = useState<View>('calendar');
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
   const handleSelectList = (listId: string) => {
     setSelectedListId(listId || null);
@@ -135,7 +163,9 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AppContent />
+        <ErrorBoundary>
+          <AppContent />
+        </ErrorBoundary>
       </AuthProvider>
     </QueryClientProvider>
   );

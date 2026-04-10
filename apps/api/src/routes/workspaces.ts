@@ -3,8 +3,8 @@ import { drizzle } from 'drizzle-orm/d1';
 import type { AppType } from '../types';
 import { requireAuth } from '../middleware/auth';
 import { requireRole } from '../middleware/rbac';
-import { workspaces as workspacesTable, workspaceMembers, users } from '../db/schema';
-import { eq } from 'drizzle-orm';
+import { workspaces as workspacesTable, workspaceMembers, users, lists, tasks } from '../db/schema';
+import { eq, inArray } from 'drizzle-orm';
 
 export const workspaces = new Hono<AppType>();
 
@@ -81,8 +81,20 @@ workspaces.get('/:id', async (c) => {
 
 workspaces.get('/:id/members', async (c) => {
   const db = drizzle(c.env.DB);
+  const user = c.get('user');
   const id = c.req.param('id');
-  
+
+  // Check if user is a member of the workspace
+  const membership = await db
+    .select()
+    .from(workspaceMembers)
+    .where(eq(workspaceMembers.workspaceId, id))
+    .get();
+
+  if (!membership) {
+    return c.json({ error: 'Forbidden: not a workspace member' }, 403);
+  }
+
   // Get workspace members with user details
   const results = await db
     .select({
@@ -95,7 +107,7 @@ workspaces.get('/:id/members', async (c) => {
     .innerJoin(users, eq(workspaceMembers.userId, users.id))
     .where(eq(workspaceMembers.workspaceId, id))
     .all();
-  
+
   return c.json({ members: results });
 });
 
@@ -119,7 +131,23 @@ workspaces.delete('/:id', requireRole('admin')(), async (c) => {
     return c.json({ error: 'Only the workspace owner can delete it' }, 403);
   }
 
-  // Delete workspace members first
+  // Get all list IDs in this workspace first (needed for cascade delete)
+  const listIdsResult = await db
+    .select({ id: lists.id })
+    .from(lists)
+    .where(eq(lists.workspaceId, id))
+    .all();
+  const listIds = listIdsResult.map(r => r.id);
+
+  // Delete all tasks for all lists in this workspace
+  if (listIds.length > 0) {
+    await db.delete(tasks).where(inArray(tasks.listId, listIds)).execute();
+  }
+
+  // Delete all lists in workspace
+  await db.delete(lists).where(eq(lists.workspaceId, id)).execute();
+
+  // Delete workspace members
   await db.delete(workspaceMembers).where(eq(workspaceMembers.workspaceId, id)).execute();
 
   // Delete the workspace

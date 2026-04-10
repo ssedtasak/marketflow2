@@ -1,5 +1,5 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { useState } from 'react';
+import { Component, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
 import { MagicLinkForm } from '@/components/auth/MagicLinkForm';
@@ -9,6 +9,18 @@ import { CalendarView } from '@/components/views/CalendarView';
 import { ListView } from '@/components/views/ListView';
 import { KanbanView } from '@/components/views/KanbanView';
 import { TaskDetailPanel } from '@/components/views/TaskDetailPanel';
+class ErrorBoundary extends Component {
+    state = { hasError: false };
+    componentDidCatch() {
+        this.setState({ hasError: true });
+    }
+    render() {
+        if (this.state.hasError) {
+            return this.props.fallback ?? (_jsx("div", { className: "min-h-screen flex items-center justify-center bg-gray-50", children: _jsxs("div", { className: "text-center p-6", children: [_jsx("p", { className: "text-lg font-medium text-gray-900 mb-2", children: "Something went wrong" }), _jsx("button", { onClick: () => window.location.reload(), className: "px-4 py-2 bg-gray-900 text-white rounded-lg text-sm", children: "Reload" })] }) }));
+        }
+        return this.props.children;
+    }
+}
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
@@ -19,7 +31,7 @@ const queryClient = new QueryClient({
 });
 function AuthenticatedApp() {
     const { isLoading } = useAuth();
-    const [currentView, setCurrentView] = useState('list');
+    const [currentView, setCurrentView] = useState('calendar');
     const [selectedListId, setSelectedListId] = useState(null);
     const handleSelectList = (listId) => {
         setSelectedListId(listId || null);
@@ -47,5 +59,5 @@ function AppContent() {
     return _jsx(AuthenticatedApp, {});
 }
 export default function App() {
-    return (_jsx(QueryClientProvider, { client: queryClient, children: _jsx(AuthProvider, { children: _jsx(AppContent, {}) }) }));
+    return (_jsx(QueryClientProvider, { client: queryClient, children: _jsx(AuthProvider, { children: _jsx(ErrorBoundary, { children: _jsx(AppContent, {}) }) }) }));
 }

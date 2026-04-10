@@ -11,6 +11,7 @@ const STATUS_COLORS = {
     in_review: 'bg-yellow-50 text-yellow-700',
     approved: 'bg-green-50 text-green-700',
     done: 'bg-blue-50 text-blue-700',
+    // Default for custom statuses
 };
 export function CalendarView({ listId, onSelectTask }) {
     const { data: tasks = [], isLoading } = useTasks(listId);
@@ -47,6 +48,6 @@ export function CalendarView({ listId, onSelectTask }) {
                         return _jsx("div", { className: "border-r border-b border-gray-100/60 min-h-28" }, `pad-${idx}`);
                     }
                     const isToday = date.toISOString().split('T')[0] === todayStr;
-                    return (_jsxs("div", { className: `border-r border-b border-gray-100/60 min-h-28 p-2.5 ${isToday ? 'bg-blue-50/20' : 'hover:bg-gray-50/30 transition-colors duration-200'}`, children: [_jsx("span", { className: `text-sm font-medium ${isToday ? 'text-blue-600 bg-blue-100 rounded-full w-7 h-7 flex items-center justify-center shadow-sm' : 'text-gray-500'}`, children: date.getDate() }), _jsxs("div", { className: "mt-1.5 space-y-1", children: [dayTasks.slice(0, 3).map((task) => (_jsx("button", { type: "button", onClick: () => onSelectTask(task), className: `w-full text-left text-[11px] truncate px-2 py-1 rounded-lg ${STATUS_COLORS[task.status] ?? ''} hover:opacity-80 transition-opacity duration-200`, children: task.title }, task.id))), dayTasks.length > 3 && (_jsxs("span", { className: "text-[10px] text-gray-400 pl-2", children: ["+", dayTasks.length - 3] }))] })] }, date.toISOString()));
+                    return (_jsxs("div", { className: `border-r border-b border-gray-100/60 min-h-28 p-2.5 ${isToday ? 'bg-blue-50/20' : 'hover:bg-gray-50/30 transition-colors duration-200'}`, children: [_jsx("span", { className: `text-sm font-medium ${isToday ? 'text-blue-600 bg-blue-100 rounded-full w-7 h-7 flex items-center justify-center shadow-sm' : 'text-gray-500'}`, children: date.getDate() }), _jsxs("div", { className: "mt-1.5 space-y-1", children: [dayTasks.slice(0, 3).map((task) => (_jsx("button", { type: "button", onClick: () => onSelectTask(task), className: `w-full text-left text-[11px] truncate px-2 py-1 rounded-lg ${STATUS_COLORS[task.status] ?? 'bg-gray-100 text-gray-600'} hover:opacity-80 transition-opacity duration-200`, children: task.title }, task.id))), dayTasks.length > 3 && (_jsxs("span", { className: "text-[10px] text-gray-400 pl-2", children: ["+", dayTasks.length - 3] }))] })] }, date.toISOString()));
                 }) }))] }));
 }
