@@ -18,12 +18,13 @@ export type Env = {
 const app = new Hono<{ Bindings: Env }>();
 
 app.use('*', cors({
-  origin: [
-    'http://localhost:5173', 
-    'http://localhost:4173',
-    'https://27d00f61.marketflow-web.pages.dev',
-    'https://f7d1e21a.marketflow-web.pages.dev',
-  ],
+  origin: (origin) => {
+    // Allow localhost for dev
+    if (!origin || origin.includes('localhost')) return origin;
+    // Allow any Cloudflare Pages domain for this project
+    if (origin.includes('.marketflow-web.pages.dev')) return origin;
+    return 'http://localhost:5173';
+  },
   credentials: true,
 }));
 app.onError(errorHandler);

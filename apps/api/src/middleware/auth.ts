@@ -14,16 +14,10 @@ export const requireAuth: MiddlewareHandler<AppType> = async (c, next) => {
 
   // Allowed origins for bypass in production
   const origin = c.req.header('origin');
-  const allowedOrigins = [
-    'http://localhost:5173',
-    'http://localhost:4173',
-    'https://27d00f61.marketflow-web.pages.dev',
-    'https://f7d1e21a.marketflow-web.pages.dev',
-  ];
+  // Allow localhost or any marketflow-web.pages.dev domain
   const isAllowedOrigin = origin && (
-    origin.includes('localhost') || 
-    origin.includes('27d00f61') ||
-    origin.includes('f7d1e21a')
+    origin.includes('localhost') ||
+    origin.includes('.marketflow-web.pages.dev')
   );
 
   // Skip auth in development OR with bypass header from allowed origin
